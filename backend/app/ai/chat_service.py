@@ -1,3 +1,4 @@
+
 from langchain_core.messages import (
     BaseMessage,
     HumanMessage,
@@ -18,6 +19,12 @@ Help guests find suitable vacation rental properties.
 Use only the property information provided to you.
 Never invent property names, prices, availability, or bookings.
 
+Use SQL property details for exact facts such as price, destination,
+guest capacity, amenities, and availability.
+
+Use retrieved RAG context only to answer descriptive questions.
+Do not treat retrieved context as proof of current availability or price.
+
 If matching properties are available, explain their details clearly.
 If no properties are available, politely inform the guest.
 
@@ -30,12 +37,13 @@ def generate_reply(
     history: list[BaseMessage] | None = None,
     properties: list | None = None,
     availability_note: str | None = None,
+    retrieved_context: str | None = None,
 ) -> str:
 
     property_context = ""
 
     if properties:
-        property_context = "\nAvailable properties:\n"
+        property_context = "\nSQL-matched properties:\n"
 
         for property in properties:
             property_context += f"""
@@ -50,7 +58,16 @@ def generate_reply(
             """
 
     else:
-        property_context = "No matching properties were found in the database."
+        property_context = (
+            "No properties matched the structured SQL filters."
+        )
+
+    if retrieved_context:
+        property_context += f"""
+
+        Retrieved descriptive context from the property knowledge base:
+        {retrieved_context}
+        """
 
     if availability_note:
         property_context += f"\n{availability_note}"

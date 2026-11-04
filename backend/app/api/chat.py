@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.services.property_service import search_properties
+from app.services.semantic_search_service import search_similar_documents
 
 from ..ai.requirement_extractor import extract_requirements
 from ..ai.chat_service import generate_reply
@@ -75,6 +76,18 @@ def chat(
         )
 
         # 5. Generate AI response.
+        candidate_property_ids = [property.id for property in properties]
+
+        retrieved_documents = search_similar_documents(
+         db=db,
+         query=request.message,
+         op_k=5,
+         property_ids=candidate_property_ids,
+         )
+
+        retrieved_context = "\n\n".join(
+         document.content for document in retrieved_documents
+          )
         availability_note = None
         if has_partial_date_range:
             missing_date = (
@@ -93,6 +106,7 @@ def chat(
             history=history,
             properties=properties,
             availability_note=availability_note,
+            retrieved_context=retrieved_context,
         )
 
         # 6. Save conversation.

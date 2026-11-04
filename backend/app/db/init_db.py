@@ -1,4 +1,5 @@
 from app.db.database import Base, engine
+from app.models.property_document import PropertyDocument
 from app.models.property import Property, PropertyAmenity, PropertyUnavailablePeriod
 
 
